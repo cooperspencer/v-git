@@ -8,15 +8,15 @@ fn prepend_(p string, a []string) []string {
 	return copy
 }
 fn concat_(a []string, b []string) []string {
-	mut copy := a
+	mut copy := a.clone()
 	copy << b
 	return copy
 }
 
 pub struct Git {
 	mut:
-		dir string
-		bin string
+	dir string
+	bin string
 }
 
 pub fn create(dir string, bin string) Git {
@@ -28,18 +28,15 @@ pub fn create(dir string, bin string) Git {
 
 
 
-fn (g Git)execute(command []string) ?string {
-	res := os.exec(prepend_(g.bin, command).join(' ')) or {
-		return none
-	}
+fn (g Git) execute(command []string) ?string {
+	res := os.execute(prepend_(g.bin, command).join(' '))
 	if res.exit_code != 0 {
-		eprint(res.output)
-		return none
+		return error(res.output)
 	}
 	return res.output
 }
 
-pub fn (mut g Git)cwd(dir string) {
+pub fn (mut g Git) cwd(dir string) {
 	if os.is_dir(dir) {
 		g.dir = dir
 	} else {
@@ -51,71 +48,71 @@ pub fn (mut g Git)cwd(dir string) {
 ////////
 
 // Clone a repository into a new directory
-pub fn (g Git)clone(repository string) {
-	g.execute(['clone', repository])
+pub fn (g Git) clone(repository string) ?string {
+	return g.execute(['clone', repository])
 }
-pub fn (g Git)clone_to(repository string, dir string) {
-	g.execute(['clone', repository, dir])
+pub fn (g Git) clone_to(repository string, dir string) ?string {
+	return g.execute(['clone', repository, dir])
 }
-pub fn (g Git)clone_with_options(repository string, dir string, options string) {
-	g.execute(['clone', repository, dir, options])
+pub fn (g Git) clone_with_options(repository string, dir string, options string) ?string {
+	return g.execute(['clone', repository, dir, options])
 }
 
 // Create an empty Git repository or reinitialize an existing one
-pub fn (g Git)init() {
+pub fn (g Git) init() {
 	g.init_with_options('')
 }
-pub fn (g Git)init_bare() {
+pub fn (g Git) init_bare() {
 	g.init_with_options('--bare')
 }
-pub fn (g Git)init_with_options(options string) {
+pub fn (g Git) init_with_options(options string) {
 	g.execute(['init', options])
 }
 
 ////////
 
 // Add file contents to the index
-pub fn (g Git)add(file string) {
-	g.execute(['add', file])
+pub fn (g Git) add(file string) ?string {
+	return g.execute(['add', file])
 }
-pub fn (g Git)add_multiple(files []string) {
-	g.execute(prepend_('add', files))
+pub fn (g Git) add_multiple(files []string) ?string {
+	return g.execute(prepend_('add', files))
 }
 
 // Move or rename a file, a directory, or a symlink
-pub fn (g Git)mv(from string, to string) {
-	g.execute(['mv', from, to])
+pub fn (g Git) mv(from string, to string) ?string {
+	return g.execute(['mv', from, to])
 }
 
 // Remove files from the working tree and from the index
-pub fn (g Git)rm(file string) {
-	g.execute(['rm', file])
+pub fn (g Git) rm(file string) ?string {
+	return g.execute(['rm', file])
 }
-pub fn (g Git)rm_multiple(files []string) {
-	g.execute(prepend_('rm', files))
+pub fn (g Git) rm_multiple(files []string) ?string {
+	return g.execute(prepend_('rm', files))
 }
 
-pub fn (g Git)rm_keep_local(file string) {
-	g.execute(['rm', '--cached', file])
+pub fn (g Git) rm_keep_local(file string) ?string {
+	return g.execute(['rm', '--cached', file])
 }
-pub fn (g Git)rm_multiple_keep_local(files []string) {
-	g.execute(concat_(['rm' '--cached'], files))
+pub fn (g Git) rm_multiple_keep_local(files []string) ?string {
+	return g.execute(concat_(['rm' '--cached'], files))
 }
 
 ////////
 
 // Show changes between commits, commit and working tree, etc
-pub fn (g Git)diff() {
+pub fn (g Git) diff() {
 
 }
 
 // Show commit logs
-pub fn (g Git)log() {
+pub fn (g Git) log() {
 
 }
 
 // Show various types of objects
-pub fn (g Git)show() {
+pub fn (g Git) show() {
 
 }
 
@@ -125,25 +122,25 @@ struct StatusRenamed {
 }
 struct StatusResult {
 	pub mut:
-		untracked []string
-		ignored []string
-		modified []string
-		added []string
-		deleted []string
-		renamed []StatusRenamed
-		conflicted []string
+	untracked []string
+	ignored []string
+	modified []string
+	added []string
+	deleted []string
+	renamed []StatusRenamed
+	conflicted []string
 
-		staged []string
+	staged []string
 
-		ahead int
-		behind int
+	ahead int
+	behind int
 
-		current string
-		tracking string
+	current string
+	tracking string
 }
 
 // Show the working tree status
-pub fn (g Git)status() ?StatusResult {
+pub fn (g Git) status() ?StatusResult {
 	output := g.execute(['status', '--porcelain', '-b', '-u']) or {
 		return none
 	}
@@ -213,20 +210,20 @@ pub fn (g Git)status() ?StatusResult {
 ////////
 
 // List, create, or delete branches
-pub fn (g Git)branch(options string) {
-	g.execute(['branch', options])
+pub fn (g Git) branch(options string) ?string {
+	return g.execute(['branch', options])
 	// TODO List branches
 }
-pub fn (g Git)branch_delete(branch string) {
-	g.execute(['branch', '-D', branch])
+pub fn (g Git) branch_delete(branch string) ?string {
+	return g.execute(['branch', '-D', branch])
 }
 
 // Record changes to the repository
-pub fn (g Git)commit(message string) {
-	g.execute(['commit', '-m', '"$message"'])
+pub fn (g Git) commit(message string) ?string {
+	return g.execute(['commit', '-m', '"$message"'])
 }
-pub fn (g Git)commit_with_files(message string, files []string) {
-	g.execute(concat_(['commit', '-m', message], files))
+pub fn (g Git) commit_with_files(message string, files []string) ?string {
+	return g.execute(concat_(['commit', '-m', message], files))
 }
 
 // Join two or more development histories together
@@ -247,49 +244,49 @@ pub fn (g Git)commit_with_files(message string, files []string) {
 ////////
 
 // Download objects and refs from another repository
-pub fn (g Git)fetch() {
-	g.execute(['fetch'])
+pub fn (g Git) fetch() ?string {
+	return g.execute(['fetch'])
 }
-pub fn (g Git)fetch_from(remote string, branch string) {
-	g.execute(['fetch', remote, branch])
+pub fn (g Git) fetch_from(remote string, branch string) ?string {
+	return g.execute(['fetch', remote, branch])
 }
 
 // Fetch from and integrate with another repository or a local branch
-pub fn (g Git)pull() {
-	g.execute(['pull'])
+pub fn (g Git) pull() ?string {
+	return g.execute(['pull'])
 }
-pub fn (g Git)pull_from(remote string, branch string) {
-	g.execute(['pull', remote, branch])
+pub fn (g Git) pull_from(remote string, branch string) ?string {
+	return g.execute(['pull', remote, branch])
 }
-pub fn (g Git)pull_with_options(remote string, branch string, options string) {
-	g.execute(['pull', remote, branch, options])
+pub fn (g Git) pull_with_options(remote string, branch string, options string) ?string {
+	return g.execute(['pull', remote, branch, options])
 }
 
 // Update remote refs along with associated objects
-pub fn (g Git)push() {
-	g.execute(['push'])
+pub fn (g Git) push() ?string {
+	return g.execute(['push'])
 }
-pub fn (g Git)push_to(remote string, branch string) {
-	g.execute(['push', remote, branch])
+pub fn (g Git) push_to(remote string, branch string) ?string {
+	return g.execute(['push', remote, branch])
 }
-pub fn (g Git)push_set_upstream(remote string, branch string) {
-	g.execute(['push', '--set-upstream', remote, branch])
+pub fn (g Git) push_set_upstream(remote string, branch string) ?string {
+	return g.execute(['push', '--set-upstream', remote, branch])
 }
-pub fn (g Git)push_with_options(remote string, branch string, options string) {
-	g.execute(['push', remote, branch, options])
+pub fn (g Git) push_with_options(remote string, branch string, options string) ?string {
+	return g.execute(['push', remote, branch, options])
 }
 
 
 // Manage set of tracked repositories
-pub fn (g Git)remote_add(name string, repository string) {
-	g.execute(['remote', 'add', name, repository])
+pub fn (g Git) remote_add(name string, repository string) ?string {
+	return g.execute(['remote', 'add', name, repository])
 }
-pub fn (g Git)remote_add_with_options(name string, repository string, options string) {
-	g.execute(['remote', 'add', name, repository, options])
+pub fn (g Git) remote_add_with_options(name string, repository string, options string) ?string {
+	return g.execute(['remote', 'add', name, repository, options])
 }
 
-pub fn (g Git)remote_remove(name string) {
-	g.execute(['remote', 'remove', name])
+pub fn (g Git) remote_remove(name string) ?string {
+	return g.execute(['remote', 'remove', name])
 }
 
 // TODO Others remote
