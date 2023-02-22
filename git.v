@@ -3,7 +3,7 @@ module git
 import os
 
 fn prepend_(p string, a []string) []string {
-	mut copy := a
+	mut copy := a.clone()
 	copy.prepend(p)
 	return copy
 }
